@@ -7,3 +7,7 @@ db.sqlite3
 node_modules/
 dist/
 .DS_Store
+# Local County360 backups
+backend/facilities/views_backup.py
+backend/facilities_backup.json
+frontend/src_backup/

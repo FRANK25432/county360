@@ -29,11 +29,14 @@ class FacilityViewSet(viewsets.ModelViewSet):
         search = params.get("search")
         facility_status = params.get("status")
         county = params.get("county")
+        city = params.get("city")
 
         if category:
             qs = qs.filter(category=category)
         if county:
             qs = qs.filter(county__iexact=county)
+        if city:
+              qs = qs.filter(city__iexact=city)
         if sub_county:
             qs = qs.filter(sub_county__icontains=sub_county)
         if ward:
@@ -162,3 +165,16 @@ def categories(request):
         {"value": value, "label": label}
         for value, label in Facility.CATEGORY_CHOICES
     ])
+# Kenyan cities and towns for the County360 map
+KENYA_CITIES = [
+    {"name": "Nairobi", "county": "Nairobi", "latitude": -1.2864, "longitude": 36.8172},
+    {"name": "Mombasa", "county": "Mombasa", "latitude": -4.0435, "longitude": 39.6682},
+    {"name": "Kisumu", "county": "Kisumu", "latitude": -0.1022, "longitude": 34.7617},
+    {"name": "Nakuru", "county": "Nakuru", "latitude": -0.3031, "longitude": 36.0800},
+    {"name": "Eldoret", "county": "Uasin Gishu", "latitude": 0.5143, "longitude": 35.2698},
+   
+    ]
+
+@api_view(["GET"])
+def cities(request):
+    return Response(KENYA_CITIES)

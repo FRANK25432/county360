@@ -18,6 +18,7 @@ class Facility(models.Model):
     name = models.CharField(max_length=200)
     category = models.CharField(max_length=30, choices=CATEGORY_CHOICES)
     county = models.CharField(max_length=100, default="Nandi")
+    city = models.CharField(max_length=100, blank=True, default="", db_index=True)
     sub_county = models.CharField(max_length=100, blank=True)
     ward = models.CharField(max_length=100, blank=True)
     address = models.TextField(blank=True)

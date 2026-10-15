@@ -41,6 +41,7 @@ import {
 } from 'recharts'
 import {
   getCategories,
+  getCities,
   getFacilities,
   getStatistics,
 } from './api.js'
@@ -79,6 +80,25 @@ function MapResizer() {
     const timer = setTimeout(() => map.invalidateSize(), 150)
     return () => clearTimeout(timer)
   }, [map])
+
+  return null
+}
+function CityMapController({ city }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (
+      city &&
+      Number.isFinite(city.latitude) &&
+      Number.isFinite(city.longitude)
+    ) {
+      map.flyTo(
+        [city.latitude, city.longitude],
+        12,
+        { duration: 1 }
+      )
+    }
+  }, [city, map])
 
   return null
 }
@@ -169,38 +189,42 @@ export default function App() {
   const [gapError, setGapError] = useState('')
   const [gapResult, setGapResult] = useState(null)
 
-  async function loadData() {
-    setLoading(true)
-    setError('')
-    setConnectionStatus('checking')
+  const [cities, setCities] = useState([])
+  const [selectedCity, setSelectedCity] = useState('Eldoret')
+async function loadData(cityName = selectedCity) {
+  setLoading(true)
+  setError('')
+  setConnectionStatus('checking')
 
-    try {
-      const [facilityData, statistics, categoryData] =
-        await Promise.all([
-          getFacilities(),
-          getStatistics(),
-          getCategories(),
-        ])
+  try {
+    const [cityData, facilityData, statistics, categoryData] =
+      await Promise.all([
+        getCities(),
+        getFacilities({ city: cityName }),
+        getStatistics({ city: cityName }),
+        getCategories(),
+      ])
 
-      setFacilities(facilityData)
-      setStats(statistics)
-      setCategories(categoryData)
-      setConnectionStatus('connected')
-    } catch (err) {
-      console.error('County360 API connection failed:', err)
+    setCities(cityData)
+    setFacilities(facilityData)
+    setStats(statistics)
+    setCategories(categoryData)
+    setConnectionStatus('connected')
+  } catch (err) {
+    console.error('County360 API connection failed:', err)
 
-      setError(
-        'Unable to load County360 data. Check that Django is running and the API is accessible.'
-      )
-      setConnectionStatus('disconnected')
-    } finally {
-      setLoading(false)
-    }
+    setError(
+      'Unable to load County360 data. Check that Django is running and the API is accessible.'
+    )
+    setConnectionStatus('disconnected')
+  } finally {
+    setLoading(false)
   }
+}
 
   useEffect(() => {
-    loadData()
-  }, [])
+  loadData(selectedCity)
+}, [selectedCity])
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase()
@@ -317,19 +341,42 @@ export default function App() {
             <Building2 size={22} />
           </div>
           <div>
-            <b>County360</b>
-            <small>COUNTY INTELLIGENCE</small>
+            <b>Count360</b>
+            <small>CITY INTELLIGENCE</small>
           </div>
         </div>
 
         <div className="county-switch">
-          <div className="county-icon">N</div>
-          <div>
-            <small>COUNTY WORKSPACE</small>
-            <b>Nandi County</b>
-          </div>
-          <ChevronDown size={16} />
-        </div>
+  <div className="county-icon">
+    <MapPin size={18} />
+  </div>
+
+  <div style={{ flex: 1, minWidth: 0 }}>
+    <small>SELECT CITY / TOWN</small>
+
+    <select
+      value={selectedCity}
+      onChange={event => setSelectedCity(event.target.value)}
+      aria-label="Select city or town"
+      style={{
+        width: '100%',
+        marginTop: 5,
+        padding: '6px 4px',
+        border: '1px solid #dce5df',
+        borderRadius: 6,
+        background: 'white',
+      }}
+    >
+      {cities.map(city => (
+        <option key={city.name} value={city.name}>
+          {city.name}
+        </option>
+      ))}
+    </select>
+  </div>
+
+  <ChevronDown size={16} />
+</div>
 
         <div className="nav-label">WORKSPACE</div>
 
@@ -408,9 +455,9 @@ export default function App() {
         <header className="topbar" id="overview">
           <div>
             <div className="eyebrow">
-              COUNTY PLANNING PLATFORM <span>•</span> LIVE DATABASE VIEW
+              CITY PLANNING PLATFORM <span>•</span> LIVE DATABASE VIEW
             </div>
-            <h1>County overview</h1>
+            <h1>City  overview</h1>
             <p>
               Explore facility records, geographic coverage and potential
               service gaps.
@@ -523,12 +570,16 @@ export default function App() {
 
             <div className="map-wrap">
               <MapContainer
-                center={center}
-                zoom={10}
-                scrollWheelZoom
-                className="leaflet-map"
+                  center={center}
+                  zoom={10}
+                  scrollWheelZoom
+                  className="leaflet-map"
               >
                 <MapResizer />
+
+                <CityMapController
+                  city={cities.find(item => item.name === selectedCity)}
+                />
 
                 <TileLayer
                   attribution="&copy; OpenStreetMap contributors"
@@ -823,8 +874,8 @@ export default function App() {
             <input
               value={county}
               onChange={event => setCounty(event.target.value)}
-              placeholder="County name"
-              aria-label="County name"
+              placeholder="city name"
+              aria-label="City name"
               required
             />
 
@@ -923,7 +974,7 @@ export default function App() {
           </div>
 
           <p style={{ marginTop: 12, fontSize: 12, lineHeight: 1.7 }}>
-            County360 can prepare evidence-based recommendations once
+            Count360 can prepare evidence-based recommendations once
             verified facility, population, climate and infrastructure
             datasets are connected. AI recommendations are not yet
             implemented in this dashboard, and this panel does not generate
@@ -933,7 +984,7 @@ export default function App() {
 
         <footer>
           <span>
-            County360 <b>•</b> County intelligence platform
+            Count360 <b>•</b> city intelligence platform
           </span>
           <span>
             Use verified sources before making planning decisions.
